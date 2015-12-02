@@ -1,0 +1,292 @@
+@@ -0,0 +1,292 @@
+import mysql.connector
+
+# ---------   PLAYER LOCATION
+
+# Tells the current room the player is at
+def playerLoc():
+    cur = db.cursor()
+    sql = "select location from player,rooms where roomId in(select location from player where playerID=1)"
+    cur.execute(sql)
+    result = cur.fetchall()
+    if cur.rowcount>=1:
+        cur.execute(sql)
+        for row in result:
+            playerloc = row[0]
+    return playerloc
+
+# ---------     ROOM DESCRIPTION, EXAMINATION
+
+#Returns the rooms short description, when you enter the room
+def roomDesc():
+    cur = db.cursor()
+    sql = "select roomDesc from rooms where roomId in(select location from player where playerID=1)"
+    cur.execute(sql)
+    result = cur.fetchall()
+    if cur.rowcount>=1:
+        cur.execute(sql)
+        for row in result:
+            print(row[0])
+    return
+
+#Returns the room's long description, when examining
+def roomExa():
+    cur = db.cursor()
+    sql = "select roomExa from rooms where roomId in(select location from player where playerID=1)"
+    cur.execute(sql)
+    result = cur.fetchall()
+    if cur.rowcount>=1:
+        cur.execute(sql)
+        for row in result:
+            print(row[0])
+    roomItems()
+    return
+
+#Returns the descriptions of items' in the room.
+def roomItems():
+    cur = db.cursor()
+    sql = "select itemDesc from items where location in(select location from player where playerID=1)"
+    cur.execute(sql)
+    result = cur.fetchone()
+    while result is not None:
+        print(result[0])
+        result = cur.fetchone() 
+    return
+
+def exaItem(itemID):
+    cur = db.cursor()
+    sql = "select itemExa from items where itemID=('%s')" %itemID
+    cur.execute(sql)
+    result = cur.fetchone()
+    while result is not None:
+        print(result[0])
+        result = cur.fetchone() 
+    return result
+
+# ---------      TAKING & USING ITEMS
+
+def itemTakeable(itemID):
+    cur = db.cursor()
+    sql = "select takeable from items where itemID=('%s')" %itemID
+    cur.execute(sql)
+    result = cur.fetchall()
+    if cur.rowcount>=1:
+        cur.execute(sql)
+        for row in result:
+            result =row[0]
+    return result
+
+def itemWithPlayer(itemID):
+    cur = db.cursor()
+    sql = "select withPlayer from items,player where playerID=withPlayer"
+    cur.execute(sql)
+    result = cur.fetchall()
+    if cur.rowcount>=1:
+        cur.execute(sql)
+        for row in result:
+            result =row[0]
+    return result
+    
+def takeItem(itemID):
+    cur = db.cursor()
+    sql= "update items set location=null,withPlayer=True where itemID=('%s')" %itemID
+    cur.execute(sql)
+    return
+
+# -----------    ITEM LOCATIONS, INVENTORY
+
+#Returns the room's id the item is at
+def itemInRoom(itemID):
+    cur = db.cursor()
+    sql = "select location from items where itemID=('%s')" %itemID
+    cur.execute(sql)
+    result = cur.fetchall()
+    if cur.rowcount>=1:
+        cur.execute(sql)
+        for row in result:
+            itemloc = row[0]
+    return itemloc
+
+def inventory():
+    cur = db.cursor()
+    sql = "select itemName from items where withPlayer=True"
+    cur.execute(sql)
+    result = cur.fetchone()
+    print("You are carrying:")
+    while result is not None:
+        print(result[0])
+        result = cur.fetchone() 
+    return
+
+# ---------     MOVING BETWEEN ROOMS
+
+def roomInDirection(direction):
+    cur = db.cursor()
+    sql = "select "+direction+" from map where curRoom in(select location from player where playerID=1)"
+    cur.execute(sql)
+    result = cur.fetchall()
+    if cur.rowcount>=1:
+        cur.execute(sql)
+        for row in result:
+            roomDirection = row[0]
+    return roomDirection
+
+def roomOpenInDirection(direction):
+    cur = db.cursor()
+    sql = "select "+direction+"Open from map where curRoom in (select location from player where playerID = 1)"
+    cur.execute(sql)
+    result = cur.fetchall()
+    if cur.rowcount>=1:
+        cur.execute(sql)
+        for row in result:
+            roomDirectionOpen = row[0]
+    return roomDirectionOpen
+
+def moveIfPossible(direction):
+    moveok = False
+    if roomInDirection(direction) !="null" and roomOpenInDirection(direction) == 1:
+        cur = db.cursor()
+        sql="update player set location = "+str(roomInDirection(direction))+" where playerID=1"
+        cur.execute(sql)
+        moveok = True        
+        if roomVisited()==False:
+            updateRoomVisited()
+    return moveok
+
+# ---------     VISITING ROOMS
+
+#Checks if the room has been visited
+def roomVisited():
+    cur = db.cursor()
+    sql="select roomVisited from rooms where roomID in (select location from player where playerID = 1)"
+    cur.execute(sql)
+    result = cur.fetchall()
+    if cur.rowcount>=1:
+        cur.execute(sql)
+        for row in result:
+            visited = row[0]
+    return visited
+
+#Updates the room's state to visited=true
+def updateRoomVisited():
+    cur = db.cursor()
+    sql="update rooms set roomVisited = True where roomID in (select location from player where playerID = 1)"
+    cur.execute(sql)
+    return
+# ---------  STORY STUFF
+
+def storyActive():
+    cur = db.cursor()
+    sql="select storyActive from rooms where roomID in (select location from player where playerID = 1)"
+    cur.execute(sql)
+    result = cur.fetchall()
+    if cur.rowcount>=1:
+        cur.execute(sql)
+        for row in result:
+            visited = row[0]
+    return visited
+
+def tellStory():
+    cur = db.cursor()
+    sql = "select story from story where location in(select location from player where playerID=1)"
+    cur.execute(sql)
+    result = cur.fetchall()
+    if cur.rowcount>=1:
+        cur.execute(sql)
+        for row in result:
+            print(row[0])
+    return
+
+# ----------------------      MAIN PROGRAM  -----------------------
+
+db = mysql.connector.connect(host="localhost",
+                            user="root",
+                            passwd="ownserver1711",
+                            db="base",
+                            buffered=True)
+end = "temp"
+while (end!="quit"):
+    roomDesc()
+    if storyActive == True:
+        tellStory()
+    com = "temp"
+    while (end!="quit"):
+        com=input("")
+        if com=="":
+            print("Still waiting... ")
+        else:
+            comList = com.split()
+            com = comList[0]
+            del comList[0]
+            item = " ".join(str(x)for x in comList)
+
+        # Examining items
+        if com == "examine" or com =="exa":
+            if item=="":
+                roomExa()           
+                 
+            else:
+                cur = db.cursor()           #Finds the item's itemID
+                sql = "select itemID from items where itemName=('%s')" %item
+                cur.execute(sql)
+                itemID= cur.fetchone()
+                if itemID != None:          #Checks if the item is in the room, it can't be if it doesn't have ID
+                    if itemInRoom(itemID)==playerLoc() or itemWithPlayer(itemID)==True or itemInRoom(itemID)==0:
+                        exaItem(itemID)
+                    else:
+                        print(item+" can not be examined, because it is not in the room.")
+                else:
+                    print(item+" can not be examined, because it is not in the room.")
+
+        # Moving between areas
+        elif com == "east" or com == "e" or com == "west" or com == "w" or com == "north" or com == "n" or com == "south" or com == "s":
+            if com=="e":
+                com = "east";
+            if com=="w":
+                com = "west";
+            if com=="n":
+                com = "north";
+            if com=="s":
+                com = "south";
+            if moveIfPossible(com) == True:
+                if storyActive() == True:
+                    roomDesc()
+                    tellStory()
+                else:
+                    roomDesc()
+            else:
+                print("You cannot move to that direction")
+
+        # Taking items        
+        elif com == "take":
+            cur = db.cursor()                   #Finds the item's itemID
+            sql = "select itemID from items where itemName=('%s')" %item
+            cur.execute(sql)
+            itemID= cur.fetchone()
+            if itemID != None:                  #Checks if the item is in the room, it can't be if it doesn't have ID
+                if itemInRoom(itemID)==playerLoc() or itemInRoom(itemID)==0:
+                    if itemTakeable(itemID)==True:
+                        takeItem(itemID)
+                        print(item+" taken.")
+                    else:
+                        print(item+" can not be taken.")                      
+                else:
+                    print(item+" can not be taken, because it is not in the room.")
+            else:
+                print(item+" can not be taken, because it is not in the room.")
+
+        # Inventory
+        elif com == "inv" or com == "inventory":
+            inventory()
+        elif com == "quit" or com == "q":
+            end="quit"
+        else:
+           print("Sorry, I didn't understand.")
+            
+            
+            
+    
+roomDesc()
+roomExa()
+db.rollback()
+db.close()

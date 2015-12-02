@@ -1,0 +1,236 @@
+@@ -0,0 +1,234 @@
+
+DROP DATABASE IF EXISTS base;
+CREATE DATABASE base;
+USE base;
+
+drop table if exists rooms;
+drop table if exists items;
+drop table if exists player;
+drop table if exists map;
+
+
+create table rooms (
+	roomID int not null,
+    roomName varchar(50) DEFAULT NULL,
+    roomDesc varchar(1000) DEFAULT NULL,
+	roomExa varchar(1000) DEFAULT NULL,
+    roomVisited bool DEFAULT FALSE,
+    storyActive bool DEFAULT FALSE,
+    primary key(roomID)
+);
+
+create table map (
+	ID int not null,
+    curRoom int DEFAULT NULL,
+    north int DEFAULT NULL,
+    northOpen bool DEFAULT TRUE,
+    east int DEFAULT NULL,
+    eastOpen bool DEFAULT TRUE,
+    south int DEFAULT NULL,
+    southOpen bool DEFAULT TRUE,
+    west int DEFAULT NULL,
+    westOpen bool DEFAULT TRUE,
+    up int DEFAULT NULL,
+    upOpen bool DEFAULT TRUE,
+    down int DEFAULT NULL,
+    downopen bool DEFAULT TRUE,
+    foreign key(north) references rooms(roomID),
+    foreign key(east) references rooms(roomID),
+    foreign key(south) references rooms(roomID),
+    foreign key(west) references rooms(roomID),
+    foreign key(curRoom) references rooms(roomID),
+    foreign key(up) references rooms(roomID),
+    foreign key(down) references rooms(roomID),
+    primary key(ID)
+);
+
+create table player (
+	playerID int not null,
+    location int DEFAULT NULL,
+    foreign key(location) references rooms(roomID),
+	primary key(playerID)
+);
+
+create table items (
+	itemID int not null,
+    itemName varchar(20) DEFAULT NULL,
+    itemExa varchar(1000) DEFAULT NULL,
+    itemDesc varchar(1000) DEFAULT NULL,
+    location int DEFAULT NULL,
+    withPlayer int DEFAULT NULL,
+    takeable bool DEFAULT FALSE,
+    foreign key(withPlayer) references player(playerID),
+    foreign key(location) references rooms(roomID),
+    primary key(itemID)
+);
+create table story (
+	storyID int NOT NULL,
+    location int DEFAULT NULL,
+    story varchar(1000) DEFAULT NULL,
+    foreign key(location) references rooms(roomID),
+    primary key(storyID)
+);
+
+# Rooms
+insert into rooms (roomID) values ( 0 );
+
+insert into rooms values (
+	1, # ID
+    "Front Yard", #Name
+    "You are at the front yard.", #Desc
+    "There’s a low fence surrounding the yard and not much else. Few planters are beside the door with dried plants. The door back in is in north.", #Exa
+    False, #Visited
+    False# StoryActive
+);
+
+insert into rooms values (
+	2, #Id
+    "Entry Hall", #name
+    "You are the the entry hall.", #Desc
+    "The hall is quite bare. There are just few paintings on the wall and a huge fancy rug that covers most of the floor. Next to door is a coat hanger and a small shelf full of hat boxes. Big windows let lots of light in and you can clearly see lots of dust hovering in the air. There are doors to north and east and staircases in west and east.", #Exa
+    False, #Visited
+	False #Storyactive
+);
+insert into rooms values (
+	3,
+    "Dining Hall",
+    "You are at the dining hall.",
+    "hehehe",
+    False, False
+);
+insert into rooms values (
+	4,
+    "Kitchen",
+    "You are at the kitchen.",
+    "You are at the kitchen.",
+    False,
+    True
+);
+insert into rooms values (
+	5,
+    "Basement",
+    "You are at the basement.",
+    "You are at the kitchen.",
+    False,
+    False
+);
+insert into rooms values (
+	6,
+    "Lobby",
+    "You are at the lobby.",
+    "You are at the kitchen.",
+    False,
+    False
+);
+insert into rooms values (
+	7,
+    "Backyard",
+    "You are at the backyard.",
+    "You are at the kitchen.",
+    False,
+    False
+);
+insert into rooms values (
+	8,
+    "Pantry",
+    "You are in the pantry.",
+    "You are at the kitchen.",
+    False,
+    False
+);
+
+# Playah
+insert into player values (
+	1,
+    3
+);
+
+# Connect rooms
+insert into map values (
+1,
+1,   # curRoom
+2,True, #North
+null,False, #east
+null,False,  # south
+null, False,  #West
+null, False,  #Up
+null, False #Down
+
+);
+insert into map values (
+2,
+2,   # curRoom
+3,True, #North
+5,False, #east
+1,True,  # south
+6, False,  #West
+null, False,  #Up
+null, False #Down
+
+);
+insert into map values (
+3,
+3,   # curRoom
+null,False, #North
+null,False, #east
+2,True,  # south
+4, True,  #West
+null, False,  #Up
+null, False #Down
+
+);
+insert into map values (
+4,
+4,   # curRoom
+7,False, #North
+3,True, #east
+8,False,  # south
+null, False,  #West
+null, False,  #Up
+null, False #Down
+
+);
+
+insert into items values (
+1, #ID
+"Ladder", #Name
+"Surprisingly sturdy looking ladder.", #itemExa
+"You can see a ladder leaning onto the wall on the left side of the door.", #itemDesc
+1, #Location
+NULL, #Withplayer
+TRUE #Takeable
+);
+insert into items values (
+2, #ID
+"Moose", #Name
+"The moose's fur seems to be grayed at places. He stares at you bit drowsily.", #itemExa
+"A moose is standing at the lawn, picking at the grass.", #itemDesc
+1, #Location
+NULL, #Withplayer
+FALSE #takeable
+);
+insert into items values (
+3, #ID
+"Dried meat", #Name
+"A bag of dried meat. The package is unopened.", #itemExa
+"There is a box of rice and a bag of dried meat", #itemDesc
+3, #Location
+NULL, #Withplayer
+True #takeable
+);
+
+insert into story values (
+1, #ID
+4,
+"A moose is staring at you through the front yard window." #Story
+);
+insert into story values (
+2, #ID
+2,
+"You can see wet footsteps leading downstairs" #Story
+);
+select * from story;
+select * from rooms;
+update rooms set storyActive=True where roomID=2;
+\ No newline at end of file
